@@ -13,7 +13,7 @@ namespace SnapCardViewHook.Core
         public delegate IntPtr CardDefList_Find_delegate_(int cardDef);
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        public delegate void CardsView_Initialize_delegate_(
+        public delegate void CardView_Initialize_delegate_(
             IntPtr thisPr, IntPtr cardDef, int cost, int power, int rarity,
             IntPtr borderDefId, IntPtr artVariantDefId, IntPtr surfaceEffectDefId,
             IntPtr cardRevealEffectDefId, int cardRevealEffectType, bool showRevealEffectOnStart,
@@ -35,12 +35,15 @@ namespace SnapCardViewHook.Core
         public static IL2CppFieldInfoWrapper[] CardRevealEffectDef_Id_Fields { get; private set; }
         public static CardDefList_Find_delegate_ CardDefList_Find { get; private set; }
         public static int CardDef_Name_Field_Offset { get; private set; }
-        public static CardsView_Initialize_delegate_ CardsView_Initialize_Original { get; private set; }
+        public static CardView_Initialize_delegate_ CardViewInitializeOriginal { get; private set; }
 
-        public static CardsView_Initialize_delegate_ CardViewInitOverride { get; set; }
+        public static CardView_Initialize_delegate_ CardViewInitOverride { get; set; }
 
 
         public static bool Loaded { get; private set; }
+
+        private static CardView_Initialize_delegate_ _detour_CardView_Initialize_delegate;
+
 
         public static void EnsureLoaded()
         {
@@ -184,15 +187,18 @@ namespace SnapCardViewHook.Core
             }
 
             void* originalPtr;
-
+            // store delegate into class to avoid garbage collection
+            // alternatively use GCHandle.Alloc
+            var detourDelegate = _detour_CardView_Initialize_delegate = new CardView_Initialize_delegate_(CardView_Initialize_Detour);
+            
             if (!HookHelper.CreateHook(
                     (void*)method.MethodPointer,
-                    (void*)Marshal.GetFunctionPointerForDelegate(new CardsView_Initialize_delegate_(CardView_Initialize_Detour)),
+                    (void*)Marshal.GetFunctionPointerForDelegate(detourDelegate),
                     &originalPtr))
                 throw new Exception("CreateHook failed");
 
-            CardsView_Initialize_Original = (CardsView_Initialize_delegate_)
-                Marshal.GetDelegateForFunctionPointer(new IntPtr(originalPtr), typeof(CardsView_Initialize_delegate_));
+            CardViewInitializeOriginal = (CardView_Initialize_delegate_)
+                Marshal.GetDelegateForFunctionPointer(new IntPtr(originalPtr), typeof(CardView_Initialize_delegate_));
         }
 
         private static void Collect_CardDef(IL2CppImageWrapper[] assemblies)
@@ -224,7 +230,7 @@ namespace SnapCardViewHook.Core
                 return;
             }
 
-            CardsView_Initialize_Original(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
+            CardViewInitializeOriginal(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
                 surfaceEffectDefId, cardRevealEffectDefId, cardRevealEffectType, showRevealEffectOnStart, logoEffectId,
                 cardBackDefId, isMorph);
         }

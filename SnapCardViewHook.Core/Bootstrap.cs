@@ -28,7 +28,7 @@ namespace SnapCardViewHook.Core
             catch (Exception e) 
             {
                 MessageBox.Show(
-                    $"An error occured, SnapCardViewer has not loaded properly and will not function an update might be required." +
+                    $"An error occured, SnapCardViewer has not loaded properly and will not function, an update might be required." +
                     $"\nError details:\n\n\n{e}",
                     "Error", 
                     MessageBoxButtons.OK, 

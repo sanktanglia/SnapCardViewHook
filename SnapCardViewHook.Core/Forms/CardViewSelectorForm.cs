@@ -48,7 +48,7 @@ namespace SnapCardViewHook.Core.Forms
             if (force3DCheckbox.Checked)
                 rarity = 7;
 
-            SnapTypeDataCollector.CardsView_Initialize_Original(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
+            SnapTypeDataCollector.CardViewInitializeOriginal(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
                 surfaceEffectDefId, cardRevealEffectDefId, cardRevealEffectType, showRevealEffectOnStart, logoEffectId,
                 cardBackDefId, isMorph);
         }
