@@ -42,7 +42,7 @@
             // 
             this.surfaceEffectBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.surfaceEffectBox.FormattingEnabled = true;
-            this.surfaceEffectBox.Location = new System.Drawing.Point(35, 35);
+            this.surfaceEffectBox.Location = new System.Drawing.Point(34, 40);
             this.surfaceEffectBox.Name = "surfaceEffectBox";
             this.surfaceEffectBox.Size = new System.Drawing.Size(216, 21);
             this.surfaceEffectBox.TabIndex = 0;
@@ -51,7 +51,7 @@
             // 
             this.overrideSurfaceEffectCheckBox.AutoSize = true;
             this.overrideSurfaceEffectCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.overrideSurfaceEffectCheckBox.Location = new System.Drawing.Point(35, 9);
+            this.overrideSurfaceEffectCheckBox.Location = new System.Drawing.Point(34, 14);
             this.overrideSurfaceEffectCheckBox.Name = "overrideSurfaceEffectCheckBox";
             this.overrideSurfaceEffectCheckBox.Size = new System.Drawing.Size(160, 20);
             this.overrideSurfaceEffectCheckBox.TabIndex = 1;
@@ -62,7 +62,7 @@
             // 
             this.overrideRevealEffectCheckBox.AutoSize = true;
             this.overrideRevealEffectCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.overrideRevealEffectCheckBox.Location = new System.Drawing.Point(35, 92);
+            this.overrideRevealEffectCheckBox.Location = new System.Drawing.Point(34, 77);
             this.overrideRevealEffectCheckBox.Name = "overrideRevealEffectCheckBox";
             this.overrideRevealEffectCheckBox.Size = new System.Drawing.Size(154, 20);
             this.overrideRevealEffectCheckBox.TabIndex = 3;
@@ -73,7 +73,7 @@
             // 
             this.revealEffectBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.revealEffectBox.FormattingEnabled = true;
-            this.revealEffectBox.Location = new System.Drawing.Point(35, 118);
+            this.revealEffectBox.Location = new System.Drawing.Point(34, 103);
             this.revealEffectBox.Name = "revealEffectBox";
             this.revealEffectBox.Size = new System.Drawing.Size(216, 21);
             this.revealEffectBox.TabIndex = 2;
@@ -82,7 +82,7 @@
             // 
             this.overrideVariantCheckBox.AutoSize = true;
             this.overrideVariantCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.overrideVariantCheckBox.Location = new System.Drawing.Point(35, 181);
+            this.overrideVariantCheckBox.Location = new System.Drawing.Point(34, 141);
             this.overrideVariantCheckBox.Name = "overrideVariantCheckBox";
             this.overrideVariantCheckBox.Size = new System.Drawing.Size(121, 20);
             this.overrideVariantCheckBox.TabIndex = 5;
@@ -93,7 +93,7 @@
             // 
             this.variantBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.variantBox.FormattingEnabled = true;
-            this.variantBox.Location = new System.Drawing.Point(35, 234);
+            this.variantBox.Location = new System.Drawing.Point(34, 188);
             this.variantBox.Name = "variantBox";
             this.variantBox.Size = new System.Drawing.Size(216, 21);
             this.variantBox.TabIndex = 4;
@@ -104,7 +104,7 @@
             this.ensureVariantMatchCheckbox.Checked = true;
             this.ensureVariantMatchCheckbox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.ensureVariantMatchCheckbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ensureVariantMatchCheckbox.Location = new System.Drawing.Point(35, 207);
+            this.ensureVariantMatchCheckbox.Location = new System.Drawing.Point(34, 162);
             this.ensureVariantMatchCheckbox.Name = "ensureVariantMatchCheckbox";
             this.ensureVariantMatchCheckbox.Size = new System.Drawing.Size(195, 20);
             this.ensureVariantMatchCheckbox.TabIndex = 6;
@@ -117,7 +117,7 @@
             this.force3DCheckbox.Checked = true;
             this.force3DCheckbox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.force3DCheckbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.force3DCheckbox.Location = new System.Drawing.Point(35, 301);
+            this.force3DCheckbox.Location = new System.Drawing.Point(34, 231);
             this.force3DCheckbox.Name = "force3DCheckbox";
             this.force3DCheckbox.Size = new System.Drawing.Size(111, 20);
             this.force3DCheckbox.TabIndex = 7;
@@ -128,7 +128,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(277, 351);
+            this.ClientSize = new System.Drawing.Size(283, 268);
             this.Controls.Add(this.force3DCheckbox);
             this.Controls.Add(this.ensureVariantMatchCheckbox);
             this.Controls.Add(this.overrideVariantCheckBox);

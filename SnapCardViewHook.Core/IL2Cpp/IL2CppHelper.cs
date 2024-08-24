@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+// ReSharper disable InconsistentNaming
 
-namespace SnapCardViewHook.Core
+namespace SnapCardViewHook.Core.IL2Cpp
 {
     internal unsafe class IL2CppHelper
     {

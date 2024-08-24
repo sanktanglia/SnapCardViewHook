@@ -45,6 +45,7 @@ namespace SnapCardViewHook.Core
             });
 
             t.SetApartmentState(ApartmentState.STA);
+            t.IsBackground = true;
             t.Start();
         }
 

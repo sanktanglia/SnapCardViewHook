@@ -54,9 +54,12 @@
     <Compile Include="Forms\CardViewSelectorForm.Designer.cs">
       <DependentUpon>CardViewSelectorForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="IL2CppHelper.cs" />
+    <Compile Include="IL2Cpp\IL2CppHelper.cs" />
+    <Compile Include="IL2Cpp\IL2CppStringRef.cs" />
     <Compile Include="SnapTypeDataCollector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Wrappers\CardDefWrapper.cs" />
+    <Compile Include="Wrappers\MonoObjectWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IL2CppApi\IL2CppApi.vcxproj">
@@ -73,5 +76,6 @@
       <DependentUpon>CardViewSelectorForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

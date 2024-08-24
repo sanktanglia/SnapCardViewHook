@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using IL2CppApi.Wrappers;
+using SnapCardViewHook.Core.IL2Cpp;
+using SnapCardViewHook.Core.Wrappers;
 
 namespace SnapCardViewHook.Core.Forms
 {
@@ -39,7 +41,7 @@ namespace SnapCardViewHook.Core.Forms
             IntPtr cardRevealEffectDefId, int cardRevealEffectType, bool showRevealEffectOnStart,
             int logoEffectId, int cardBackDefId, bool isMorph)
         {
-            artVariantDefId = GetVariantOverride(artVariantDefId);
+            artVariantDefId = GetVariantOverride(artVariantDefId, cardDef);
             surfaceEffectDefId = GetSurfaceEffectOverride(surfaceEffectDefId);
             cardRevealEffectDefId = GetRevealEffectOverride(cardRevealEffectDefId);
 
@@ -51,10 +53,19 @@ namespace SnapCardViewHook.Core.Forms
                 cardBackDefId, isMorph);
         }
 
-        private unsafe IntPtr GetVariantOverride(IntPtr original)
+        private unsafe IntPtr GetVariantOverride(IntPtr original, IntPtr cardDef)
         {
             if (!overrideVariantCheckBox.Checked || variantBox.SelectedItem == null)
                 return original;
+
+            if (ensureVariantMatchCheckbox.Checked)
+            {
+                var card = new CardDefWrapper(cardDef);
+                var selectedVariant = variantBox.SelectedItem.ToString();
+
+                if (!selectedVariant.StartsWith(card.Name))
+                    return original;
+            }
 
             IntPtr value;
             IL2CppHelper.GetStaticFieldValue((void*)_variantList[variantBox.SelectedItem.ToString()].Ptr, &value);

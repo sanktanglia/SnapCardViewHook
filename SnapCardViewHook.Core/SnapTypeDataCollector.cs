@@ -34,6 +34,7 @@ namespace SnapCardViewHook.Core
         public static IL2CppFieldInfoWrapper[] SurfaceEffectDef_Id_Fields { get; private set; }
         public static IL2CppFieldInfoWrapper[] CardRevealEffectDef_Id_Fields { get; private set; }
         public static CardDefList_Find_delegate_ CardDefList_Find { get; private set; }
+        public static int CardDef_Name_Field_Offset { get; private set; }
         public static CardsView_Initialize_delegate_ CardsView_Initialize_Original { get; private set; }
 
         public static CardsView_Initialize_delegate_ CardViewInitOverride { get; set; }
@@ -60,6 +61,7 @@ namespace SnapCardViewHook.Core
             Collect_SurfaceEffectDef(assemblies);
             Collect_CardRevealEffectDef(assemblies);
             Collect_CardView(assemblies);
+            Collect_CardDef(assemblies);
         }
 
         private static IL2CppClassWrapper GetIL2CppClass(IL2CppImageWrapper[] assemblies, string assemblyName, string typeNameSpace, string typeName)
@@ -191,6 +193,18 @@ namespace SnapCardViewHook.Core
 
             CardsView_Initialize_Original = (CardsView_Initialize_delegate_)
                 Marshal.GetDelegateForFunctionPointer(new IntPtr(originalPtr), typeof(CardsView_Initialize_delegate_));
+        }
+
+        private static void Collect_CardDef(IL2CppImageWrapper[] assemblies)
+        {
+            var cardDefIdClass = TryGetIL2CppClass(assemblies, Constants.Dll_SecondDinner_CubeDef, Constants.Namespace_CubeDef, "CardDef");
+            var field = cardDefIdClass.GetFields().FirstOrDefault(f => f.Name == "<Name>k__BackingField");
+
+
+            if (field == null)
+                throw new Exception("CardDef.Name could not be found");
+
+            CardDef_Name_Field_Offset = field.Offset.ToInt32();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
