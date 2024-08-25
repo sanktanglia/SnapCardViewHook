@@ -22,11 +22,7 @@ namespace SnapCardViewHook.Core.Wrappers
             get
             {
                 var strPtr = *(void**)(Ptr + SnapTypeDataCollector.CardDef_Name_Field_Offset);
-
-                if (strPtr == null)
-                    return null;
-
-                return new IL2CppStringRef(strPtr).GetObject();
+                return strPtr == null ? null : new IL2CppStringRef(strPtr).GetObject();
             }
         }
 

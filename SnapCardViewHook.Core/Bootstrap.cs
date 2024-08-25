@@ -21,9 +21,6 @@ namespace SnapCardViewHook.Core
             {
                 SnapTypeDataCollector.EnsureLoaded();
                 CreateForm();
-#if DEBUG
-                //MessageBox.Show("Loaded");
-#endif
             }
             catch (Exception e) 
             {
@@ -42,10 +39,12 @@ namespace SnapCardViewHook.Core
             {
                 var f = new CardViewSelectorForm();
                 Application.Run(f);
-            });
+            })
+            {
+                IsBackground = true,
+            };
 
             t.SetApartmentState(ApartmentState.STA);
-            t.IsBackground = true;
             t.Start();
         }
 

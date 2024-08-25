@@ -4,11 +4,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using IL2CppApi.Wrappers;
+using SnapCardViewHook.Core.IL2Cpp;
 // ReSharper disable InconsistentNaming
 
 namespace SnapCardViewHook.Core
 {
-    public static class SnapTypeDataCollector
+    public static unsafe class SnapTypeDataCollector
     {
         public delegate IntPtr CardDefList_Find_delegate_(int cardDef);
         public delegate IntPtr CardToArtVariantDefList_Find_delegate_(IntPtr artVariantDefId);
@@ -40,6 +41,10 @@ namespace SnapCardViewHook.Core
         public static CardView_Initialize_delegate_ CardViewInitializeOriginal { get; private set; }
         public static CardToArtVariantDefList_Find_delegate_ CardToArtVariantDefList_Find { get; private set; }
         public static int CardToArtVariantDef_CardDefId_Field_Offset { get; private set; }
+        public static int BorderDef_BorderDefId_Field_Offset { get; private set; }
+        public static int BorderDef_Name_Field_Offset { get; private set; }
+        public static IL2CppFieldInfoWrapper BorderDefList_CollectibleDefs_FieldInfo { get; private set; }
+        public static IL2CppFieldInfoWrapper BorderDefList_RarityDefs_FieldInfo { get; private set; }
 
 
         public static CardView_Initialize_delegate_ CardViewInitializeHookOverride { get; set; }
@@ -70,6 +75,8 @@ namespace SnapCardViewHook.Core
             Collect_CardDef(assemblies);
             Collect_CardToArtVariantDefList(assemblies);
             Collect_CardToArtVariantDef(assemblies);
+            Collect_BorderDefList(assemblies);
+            Collect_BorderDef(assemblies);
         }
 
         private static IL2CppClassWrapper GetIL2CppClass(IL2CppImageWrapper[] assemblies, string assemblyName, string typeNameSpace, string typeName)
@@ -110,7 +117,6 @@ namespace SnapCardViewHook.Core
 
             return @class;
         }
-
 
         private static void Collect_CardDefId(IL2CppImageWrapper[] assemblies)
         {
@@ -256,6 +262,26 @@ namespace SnapCardViewHook.Core
             CardToArtVariantDef_CardDefId_Field_Offset = fieldCardDefId.Offset.ToInt32();
         }
 
+        private static void Collect_BorderDefList(IL2CppImageWrapper[] assemblies)
+        {
+            const string className = "BorderDefList";
+
+            var borderDefListClass = TryGetIL2CppClass(assemblies, Constants.Dll_SecondDinner_CubeDef, Constants.Namespace_CubeDef, className);
+
+            BorderDefList_RarityDefs_FieldInfo = TryGetField(borderDefListClass, "<RarityDefs>k__BackingField");
+            BorderDefList_CollectibleDefs_FieldInfo = TryGetField(borderDefListClass, "<CollectibleDefs>k__BackingField");
+        }
+
+        private static void Collect_BorderDef(IL2CppImageWrapper[] assemblies)
+        {
+            var borderDefClass = TryGetIL2CppClass(assemblies, Constants.Dll_SecondDinner_CubeDef, Constants.Namespace_CubeDef, "BorderDef");
+
+            var fieldBorderDefId = TryGetField(borderDefClass, "<BorderDefId>k__BackingField");
+            BorderDef_BorderDefId_Field_Offset = fieldBorderDefId.Offset.ToInt32();
+
+            var fieldName = TryGetField(borderDefClass, "<Name>k__BackingField");
+            BorderDef_Name_Field_Offset = fieldName.Offset.ToInt32();
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void CardView_Initialize_Detour(

@@ -13,26 +13,47 @@ namespace SnapCardViewHook.Core.Forms
         private Dictionary<string, IL2CppFieldInfoWrapper> _variantList;
         private Dictionary<string, IL2CppFieldInfoWrapper> _surfaceEffectList;
         private Dictionary<string, IL2CppFieldInfoWrapper> _revealEffectList;
+        private Dictionary<string, IntPtr> _borderList;
 
         public CardViewSelectorForm()
         {
             InitializeComponent();
         }
 
-        private void CardViewSelectorForm_Load(object sender, EventArgs e)
+        private unsafe void CardViewSelectorForm_Load(object sender, EventArgs e)
         {
             SnapTypeDataCollector.EnsureLoaded();
 
+            // initialize lists
             _variantList = SnapTypeDataCollector.ArtVariantDef_Id_Fields.ToDictionary(f => f.Name);
             _surfaceEffectList = SnapTypeDataCollector.SurfaceEffectDef_Id_Fields.ToDictionary(f => f.Name);
             _revealEffectList = SnapTypeDataCollector.CardRevealEffectDef_Id_Fields.ToDictionary(f => f.Name);
 
+            // initialize border list
+            _borderList = new Dictionary<string, IntPtr>();
+            CreateGetBorderData(SnapTypeDataCollector.BorderDefList_CollectibleDefs_FieldInfo);
+
+            // populate controls
             surfaceEffectBox.Items.AddRange(_surfaceEffectList.Keys.ToArray());
             revealEffectBox.Items.AddRange(_revealEffectList.Keys.ToArray());
             variantBox.Items.AddRange(_variantList.Keys.ToArray());
+            borderBox.Items.AddRange(_borderList.Keys.ToArray());
 
-
+            // set hook override
             SnapTypeDataCollector.CardViewInitializeHookOverride = CardViewInitOverride;
+        }
+
+        private unsafe void CreateGetBorderData(IL2CppFieldInfoWrapper fieldInfo)
+        {
+            var borders = (IL2CppArray*) IL2CppHelper.GetStaticFieldValue(fieldInfo.Ptr);
+            var array = &borders->vector;
+
+            for (var i = 0; i < borders->Count; i++)
+            {
+                var item = array[i];
+                var borderDef = new BorderDefWrapper(item);
+                _borderList.Add(borderDef.Name, new IntPtr(borderDef.BorderDefId));
+            }
         }
 
         public void CardViewInitOverride(
@@ -44,6 +65,7 @@ namespace SnapCardViewHook.Core.Forms
             artVariantDefId = GetVariantOverride(artVariantDefId, cardDef);
             surfaceEffectDefId = GetSurfaceEffectOverride(surfaceEffectDefId);
             cardRevealEffectDefId = GetRevealEffectOverride(cardRevealEffectDefId);
+            borderDefId = GetBorderOverride(borderDefId);
 
             if (force3DCheckbox.Checked)
                 rarity = 7;
@@ -63,10 +85,10 @@ namespace SnapCardViewHook.Core.Forms
             if (ensureVariantMatchCheckbox.Checked)
             {
                 var cardToArtVariantDef = SnapTypeDataCollector.CardToArtVariantDefList_Find(variantDefPtr);
-                var variantCardDef = *(int*)(cardToArtVariantDef +
+                var variantCardDefId = *(int*)(cardToArtVariantDef +
                                               SnapTypeDataCollector.CardToArtVariantDef_CardDefId_Field_Offset);
 
-                if (variantCardDef != new CardDefWrapper(cardDef).CardDefId)
+                if (variantCardDefId != new CardDefWrapper(cardDef).CardDefId)
                     return original;
             }
 
@@ -87,6 +109,15 @@ namespace SnapCardViewHook.Core.Forms
                 return original;
 
             return IL2CppHelper.GetStaticFieldValue(_revealEffectList[revealEffectBox.SelectedItem.ToString()].Ptr);
+        }
+
+        private IntPtr GetBorderOverride(IntPtr original)
+        {
+            if (!overrideBorderCheckBox.Checked || borderBox.SelectedItem == null)
+                return original;
+
+
+            return _borderList[borderBox.SelectedItem.ToString()];
         }
 
         private void CardViewSelectorForm_FormClosing(object sender, FormClosingEventArgs e)
