@@ -31,7 +31,7 @@ namespace SnapCardViewHook.Core.Forms
 
             // initialize border list
             _borderList = new Dictionary<string, IntPtr>();
-            CreateGetBorderData(SnapTypeDataCollector.BorderDefList_CollectibleDefs_FieldInfo);
+            GetBorderData(SnapTypeDataCollector.BorderDefList_CollectibleDefs_FieldInfo);
 
             // populate controls
             surfaceEffectBox.Items.AddRange(_surfaceEffectList.Keys.ToArray());
@@ -43,14 +43,25 @@ namespace SnapCardViewHook.Core.Forms
             SnapTypeDataCollector.CardViewInitializeHookOverride = CardViewInitOverride;
         }
 
-        private unsafe void CreateGetBorderData(IL2CppFieldInfoWrapper fieldInfo)
+        private unsafe void GetBorderData(IL2CppFieldInfoWrapper fieldInfo)
         {
             var borders = (IL2CppArray*) IL2CppHelper.GetStaticFieldValue(fieldInfo.Ptr);
+
+            if (borders == null)
+                return;
+
+            if (borders->vector == null || borders->Count <= 0 || borders->Count > 64)
+                return;
+
             var array = &borders->vector;
 
             for (var i = 0; i < borders->Count; i++)
             {
                 var item = array[i];
+
+                if(item == null) 
+                    break;
+
                 var borderDef = new BorderDefWrapper(item);
                 _borderList.Add(borderDef.Name, new IntPtr(borderDef.BorderDefId));
             }
@@ -119,7 +130,6 @@ namespace SnapCardViewHook.Core.Forms
         {
             if (!overrideBorderCheckBox.Checked || borderBox.SelectedItem == null)
                 return original;
-
 
             return _borderList[borderBox.SelectedItem.ToString()];
         }
