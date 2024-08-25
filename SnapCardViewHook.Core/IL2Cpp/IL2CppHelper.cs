@@ -28,9 +28,16 @@ namespace SnapCardViewHook.Core.IL2Cpp
             il2cpp_field_static_get_value = MakeApi<delegate_il2cpp_field_static_get_value>("il2cpp_field_static_get_value");
         }
 
-        internal static void GetStaticFieldValue(void* field, void* value)
+        internal static void GetStaticFieldValue(void* fieldInfo, void* value)
         {
-            il2cpp_field_static_get_value(field, value);
+            il2cpp_field_static_get_value(fieldInfo, value);
+        }
+
+        internal static IntPtr GetStaticFieldValue(IntPtr fieldInfo)
+        {
+            IntPtr value;
+            GetStaticFieldValue((void*)fieldInfo, &value);
+            return value;
         }
     }
 }

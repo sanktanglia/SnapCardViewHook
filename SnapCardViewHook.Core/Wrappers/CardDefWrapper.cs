@@ -29,5 +29,14 @@ namespace SnapCardViewHook.Core.Wrappers
                 return new IL2CppStringRef(strPtr).GetObject();
             }
         }
+
+        public int CardDefId
+        {
+            get
+            {
+                var value = *(int*)(Ptr + SnapTypeDataCollector.CardDef_CardDefId_Field_Offset);
+                return value;
+            }
+        }
     }
 }

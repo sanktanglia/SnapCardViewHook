@@ -32,7 +32,7 @@ namespace SnapCardViewHook.Core.Forms
             variantBox.Items.AddRange(_variantList.Keys.ToArray());
 
 
-            SnapTypeDataCollector.CardViewInitOverride = CardViewInitOverride;
+            SnapTypeDataCollector.CardViewInitializeHookOverride = CardViewInitOverride;
         }
 
         public void CardViewInitOverride(
@@ -58,41 +58,40 @@ namespace SnapCardViewHook.Core.Forms
             if (!overrideVariantCheckBox.Checked || variantBox.SelectedItem == null)
                 return original;
 
+            var variantDefPtr = IL2CppHelper.GetStaticFieldValue(_variantList[variantBox.SelectedItem.ToString()].Ptr);
+
             if (ensureVariantMatchCheckbox.Checked)
             {
-                var card = new CardDefWrapper(cardDef);
-                var selectedVariant = variantBox.SelectedItem.ToString();
+                var cardToArtVariantDef = SnapTypeDataCollector.CardToArtVariantDefList_Find(variantDefPtr);
+                var variantCardDef = *(int*)(cardToArtVariantDef +
+                                              SnapTypeDataCollector.CardToArtVariantDef_CardDefId_Field_Offset);
 
-                if (!selectedVariant.StartsWith(card.Name))
+                if (variantCardDef != new CardDefWrapper(cardDef).CardDefId)
                     return original;
             }
 
-            IntPtr value;
-            IL2CppHelper.GetStaticFieldValue((void*)_variantList[variantBox.SelectedItem.ToString()].Ptr, &value);
-
-            return value;
+            return variantDefPtr;
         }
 
-        private unsafe IntPtr GetSurfaceEffectOverride(IntPtr original)
+        private IntPtr GetSurfaceEffectOverride(IntPtr original)
         {
             if (!overrideSurfaceEffectCheckBox.Checked || surfaceEffectBox.SelectedItem == null)
                 return original;
 
-            IntPtr value;
-            IL2CppHelper.GetStaticFieldValue((void*)_surfaceEffectList[surfaceEffectBox.SelectedItem.ToString()].Ptr, &value);
-
-            return value;
+            return IL2CppHelper.GetStaticFieldValue(_surfaceEffectList[surfaceEffectBox.SelectedItem.ToString()].Ptr);
         }
 
-        private unsafe IntPtr GetRevealEffectOverride(IntPtr original)
+        private IntPtr GetRevealEffectOverride(IntPtr original)
         {
             if (!overrideRevealEffectCheckBox.Checked || revealEffectBox.SelectedItem == null)
                 return original;
 
-            IntPtr value;
-            IL2CppHelper.GetStaticFieldValue((void*)_revealEffectList[revealEffectBox.SelectedItem.ToString()].Ptr, &value);
+            return IL2CppHelper.GetStaticFieldValue(_revealEffectList[revealEffectBox.SelectedItem.ToString()].Ptr);
+        }
 
-            return value;
+        private void CardViewSelectorForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            SnapTypeDataCollector.CardViewInitializeHookOverride = null;
         }
     }
 }
