@@ -82,11 +82,15 @@ namespace SnapCardViewHook.Core.Forms
 
             var variantDefPtr = IL2CppHelper.GetStaticFieldValue(_variantList[variantBox.SelectedItem.ToString()].Ptr);
 
-            if (ensureVariantMatchCheckbox.Checked)
+            if (!ensureVariantMatchCheckbox.Checked)
+                return variantDefPtr;
+
+            var cardToArtVariantDef = SnapTypeDataCollector.CardToArtVariantDefList_Find(variantDefPtr);
+
+            if (cardToArtVariantDef != IntPtr.Zero)
             {
-                var cardToArtVariantDef = SnapTypeDataCollector.CardToArtVariantDefList_Find(variantDefPtr);
                 var variantCardDefId = *(int*)(cardToArtVariantDef +
-                                              SnapTypeDataCollector.CardToArtVariantDef_CardDefId_Field_Offset);
+                                               SnapTypeDataCollector.CardToArtVariantDef_CardDefId_Field_Offset);
 
                 if (variantCardDefId != new CardDefWrapper(cardDef).CardDefId)
                     return original;
