@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -51,22 +52,33 @@ namespace SnapCardViewHook.Core
         private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
         {
             var assemblyName = new AssemblyName(args.Name).Name;
-            var directory = Path.GetDirectoryName(args.RequestingAssembly.Location);
 
-            Debug.WriteLine($"resolving \"{assemblyName}\"");
-
-            if (directory == null)
-                return null;
-
-            foreach (var file in Directory.GetFiles(directory, "*.dll"))
+            try
             {
-                if (string.Equals(assemblyName, Path.GetFileNameWithoutExtension(file), StringComparison.InvariantCultureIgnoreCase))
-                    return Assembly.LoadFile(file);
+                var directory = Path.GetDirectoryName(args.RequestingAssembly.Location);
+
+                Debug.WriteLine($"resolving \"{assemblyName}\"");
+
+                if (directory == null)
+                    return null;
+
+                foreach (var file in Directory.GetFiles(directory, "*.dll"))
+                {
+                    if (string.Equals(assemblyName, Path.GetFileNameWithoutExtension(file),
+                            StringComparison.InvariantCultureIgnoreCase))
+                        return Assembly.LoadFile(file);
+                }
+
+                Debug.WriteLine($"resolve of \"{assemblyName}\" failed!");
+
+                return null;
             }
-
-            Debug.WriteLine($"resolve of \"{assemblyName}\" failed!");
-
-            return null;
+            catch (Exception e)
+            {
+                MessageBox.Show($"Exception while trying to resolve assembly \"{assemblyName}\"." +
+                                $"\nException details:\n\n\n{e}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw;
+            }
         }
     }
 }

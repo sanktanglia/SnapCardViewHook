@@ -17,8 +17,21 @@ namespace Launcher
                 Console.ReadKey(true);
             }
 
-            if (Loader.Inject())
+            try
+            {
+                if (Loader.Inject())
+                    return;
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Exception occured. It might help running Launcher as administrator, " +
+                                  "also make sure your antivirus is not blocking any files.\n\n" +
+                                  $"Error details:\n{e}");
+               
+                Console.ReadKey(true);
                 return;
+            }
 
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Injection failed, make sure your antivirus hasn't deleted any required files.");
