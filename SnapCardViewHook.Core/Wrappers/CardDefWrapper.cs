@@ -34,5 +34,23 @@ namespace SnapCardViewHook.Core.Wrappers
                 return value;
             }
         }
+
+        public int Cost
+        {
+            get
+            {
+                var value = *(int*)(Ptr + SnapTypeDataCollector.CardDef_Cost_Field_Offset);
+                return value;
+            }
+        }
+
+        public int Power
+        {
+            get
+            {
+                var value = *(int*)(Ptr + SnapTypeDataCollector.CardDef_Power_Field_Offset);
+                return value;
+            }
+        }
     }
 }

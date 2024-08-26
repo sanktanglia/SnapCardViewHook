@@ -14,6 +14,7 @@ namespace SnapCardViewHook.Core.Forms
         private Dictionary<string, IL2CppFieldInfoWrapper> _surfaceEffectList;
         private Dictionary<string, IL2CppFieldInfoWrapper> _revealEffectList;
         private Dictionary<string, IntPtr> _borderList;
+        private Dictionary<string, IL2CppFieldInfoWrapper> _cardDefList;
 
         public CardViewSelectorForm()
         {
@@ -28,9 +29,10 @@ namespace SnapCardViewHook.Core.Forms
             _variantList = SnapTypeDataCollector.ArtVariantDef_Id_Fields.ToDictionary(f => f.Name);
             _surfaceEffectList = SnapTypeDataCollector.SurfaceEffectDef_Id_Fields.ToDictionary(f => f.Name);
             _revealEffectList = SnapTypeDataCollector.CardRevealEffectDef_Id_Fields.ToDictionary(f => f.Name);
-
-            // initialize border list
             _borderList = new Dictionary<string, IntPtr>();
+            _cardDefList = SnapTypeDataCollector.CardDefId_Fields.Skip(2).ToDictionary(f => f.Name);
+
+            // try to load border data
             GetBorderData(SnapTypeDataCollector.BorderDefList_CollectibleDefs_FieldInfo);
 
             // populate controls
@@ -38,6 +40,7 @@ namespace SnapCardViewHook.Core.Forms
             revealEffectBox.Items.AddRange(_revealEffectList.Keys.ToArray());
             variantBox.Items.AddRange(_variantList.Keys.ToArray());
             borderBox.Items.AddRange(_borderList.Keys.ToArray());
+            cardBox.Items.AddRange(_cardDefList.Keys.ToArray());
 
             // set hook override
             SnapTypeDataCollector.CardViewInitializeHookOverride = CardViewInitOverride;
@@ -73,6 +76,7 @@ namespace SnapCardViewHook.Core.Forms
             IntPtr cardRevealEffectDefId, int cardRevealEffectType, bool showRevealEffectOnStart,
             int logoEffectId, int cardBackDefId, bool isMorph)
         {
+            cardDef = GetCardOverride(cardDef, ref cost, ref power, ref artVariantDefId);
             artVariantDefId = GetVariantOverride(artVariantDefId, cardDef);
             surfaceEffectDefId = GetSurfaceEffectOverride(surfaceEffectDefId);
             cardRevealEffectDefId = GetRevealEffectOverride(cardRevealEffectDefId);
@@ -86,17 +90,33 @@ namespace SnapCardViewHook.Core.Forms
                 cardBackDefId, isMorph);
         }
 
+        private IntPtr GetCardOverride(IntPtr original, ref int cost, ref int power, ref IntPtr artVariantDefId)
+        {
+            if (!overrideCardCheckBox.Checked || cardBox.SelectedItem == null)
+                return original;
+
+            var cardDefIdEnumValue = _cardDefList[cardBox.SelectedItem.ToString()].GetDefaultValue();
+            var overrideCardDefObjPtr = SnapTypeDataCollector.CardDefList_Find((int)(uint)cardDefIdEnumValue);
+            var objWrapper = new CardDefWrapper(overrideCardDefObjPtr);
+
+            cost = objWrapper.Cost;
+            power = objWrapper.Power;
+            artVariantDefId = IntPtr.Zero;
+
+            return overrideCardDefObjPtr;
+        }
+
         private unsafe IntPtr GetVariantOverride(IntPtr original, IntPtr cardDef)
         {
             if (!overrideVariantCheckBox.Checked || variantBox.SelectedItem == null)
                 return original;
 
-            var variantDefPtr = IL2CppHelper.GetStaticFieldValue(_variantList[variantBox.SelectedItem.ToString()].Ptr);
+            var overridePtr = IL2CppHelper.GetStaticFieldValue(_variantList[variantBox.SelectedItem.ToString()].Ptr);
 
             if (!ensureVariantMatchCheckbox.Checked)
-                return variantDefPtr;
+                return overridePtr;
 
-            var cardToArtVariantDef = SnapTypeDataCollector.CardToArtVariantDefList_Find(variantDefPtr);
+            var cardToArtVariantDef = SnapTypeDataCollector.CardToArtVariantDefList_Find(overridePtr);
 
             if (cardToArtVariantDef != IntPtr.Zero)
             {
@@ -107,7 +127,7 @@ namespace SnapCardViewHook.Core.Forms
                     return original;
             }
 
-            return variantDefPtr;
+            return overridePtr;
         }
 
         private IntPtr GetSurfaceEffectOverride(IntPtr original)

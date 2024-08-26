@@ -38,6 +38,8 @@ namespace SnapCardViewHook.Core
         public static CardDefList_Find_delegate_ CardDefList_Find { get; private set; }
         public static int CardDef_Name_Field_Offset { get; private set; }
         public static int CardDef_CardDefId_Field_Offset { get; private set; }
+        public static int CardDef_Power_Field_Offset { get; private set; }
+        public static int CardDef_Cost_Field_Offset { get; private set; }
         public static CardView_Initialize_delegate_ CardViewInitializeOriginal { get; private set; }
         public static CardToArtVariantDefList_Find_delegate_ CardToArtVariantDefList_Find { get; private set; }
         public static int CardToArtVariantDef_CardDefId_Field_Offset { get; private set; }
@@ -232,6 +234,12 @@ namespace SnapCardViewHook.Core
 
             var fieldCardDefId = TryGetField(cardDefIdClass, "<CardDefId>k__BackingField");
             CardDef_CardDefId_Field_Offset = fieldCardDefId.Offset.ToInt32();
+
+            var fieldCardPower = TryGetField(cardDefIdClass, "<Power>k__BackingField");
+            CardDef_Power_Field_Offset = fieldCardPower.Offset.ToInt32();
+
+            var fieldCardCost = TryGetField(cardDefIdClass, "<Cost>k__BackingField");
+            CardDef_Cost_Field_Offset = fieldCardCost.Offset.ToInt32();
         }
 
         private static void Collect_CardToArtVariantDefList(IL2CppImageWrapper[] assemblies)
