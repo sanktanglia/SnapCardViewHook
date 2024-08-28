@@ -95,7 +95,8 @@
             // 
             // variantBox
             // 
-            this.variantBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.variantBox.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
+            this.variantBox.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.variantBox.FormattingEnabled = true;
             this.variantBox.Location = new System.Drawing.Point(34, 284);
             this.variantBox.Name = "variantBox";

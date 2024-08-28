@@ -11,7 +11,7 @@ namespace SnapCardViewHook.Core
 {
     public static unsafe class SnapTypeDataCollector
     {
-        public delegate IntPtr CardDefList_Find_delegate_(int cardDef);
+        public delegate IntPtr CardDefList_Find_delegate_(uint cardDef);
         public delegate IntPtr CardToArtVariantDefList_Find_delegate_(IntPtr artVariantDefId);
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]

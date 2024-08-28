@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using IL2CppApi.Wrappers;
 using SnapCardViewHook.Core.IL2Cpp;
@@ -15,6 +16,8 @@ namespace SnapCardViewHook.Core.Forms
         private Dictionary<string, IL2CppFieldInfoWrapper> _revealEffectList;
         private Dictionary<string, IntPtr> _borderList;
         private Dictionary<string, IL2CppFieldInfoWrapper> _cardDefList;
+
+        private IntPtr _clonedVariantObj = IntPtr.Zero;
 
         public CardViewSelectorForm()
         {
@@ -66,7 +69,7 @@ namespace SnapCardViewHook.Core.Forms
                     break;
 
                 var borderDef = new BorderDefWrapper(item);
-                _borderList.Add(borderDef.Name, new IntPtr(borderDef.BorderDefId));
+                _borderList.Add(borderDef.Name, borderDef.BorderDefId);
             }
         }
 
@@ -96,7 +99,11 @@ namespace SnapCardViewHook.Core.Forms
                 return original;
 
             var cardDefIdEnumValue = _cardDefList[cardBox.SelectedItem.ToString()].GetDefaultValue();
-            var overrideCardDefObjPtr = SnapTypeDataCollector.CardDefList_Find((int)(uint)cardDefIdEnumValue);
+            var overrideCardDefObjPtr = SnapTypeDataCollector.CardDefList_Find((uint)cardDefIdEnumValue);
+            
+            if(overrideCardDefObjPtr == IntPtr.Zero )
+                return original;
+            
             var objWrapper = new CardDefWrapper(overrideCardDefObjPtr);
 
             cost = objWrapper.Cost;
@@ -108,10 +115,36 @@ namespace SnapCardViewHook.Core.Forms
 
         private unsafe IntPtr GetVariantOverride(IntPtr original, IntPtr cardDef)
         {
-            if (!overrideVariantCheckBox.Checked || variantBox.SelectedItem == null)
+            if (!overrideVariantCheckBox.Checked || (variantBox.SelectedItem == null && variantBox.Text.Length == 0))
                 return original;
 
-            var overridePtr = IL2CppHelper.GetStaticFieldValue(_variantList[variantBox.SelectedItem.ToString()].Ptr);
+            IntPtr variantToOverride;
+
+            if (variantBox.SelectedItem == null)
+            {
+                if (!_variantList.TryGetValue(variantBox.Text, out var variantFieldInfo))
+                {
+                    // create new obj instance
+                    if (_clonedVariantObj == IntPtr.Zero)
+                    {
+                        var modelObj = IL2CppHelper.GetStaticFieldValue(_variantList.Last().Value.Ptr);
+                        _clonedVariantObj = CloneIL2CppObject(modelObj, 1024);
+                    }
+
+                    variantToOverride = _clonedVariantObj;
+                    SetIdValue(variantToOverride, variantBox.Text);
+                }
+                else
+                {
+                    variantToOverride = IL2CppHelper.GetStaticFieldValue(variantFieldInfo.Ptr);
+                }
+            }
+            else
+            {
+                variantToOverride = IL2CppHelper.GetStaticFieldValue(_variantList[variantBox.SelectedItem.ToString()].Ptr);
+            }
+
+            var overridePtr = variantToOverride;
 
             if (!ensureVariantMatchCheckbox.Checked)
                 return overridePtr;
@@ -157,6 +190,38 @@ namespace SnapCardViewHook.Core.Forms
         private void CardViewSelectorForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             SnapTypeDataCollector.CardViewInitializeHookOverride = null;
+        }
+
+        private IntPtr CloneIL2CppObject(IntPtr obj, int size)
+        {
+            if(obj == IntPtr.Zero)
+                return IntPtr.Zero;
+
+            var cloned = Marshal.AllocHGlobal(size);
+
+            unsafe
+            {
+                var source = (byte*)obj;
+                var target = (byte*)cloned;
+
+                for(var i = 0; i < size; i++)
+                    target[i] = source[i];
+            }
+
+            return cloned;
+        }
+
+        private unsafe void SetIdValue(IntPtr idObj, string value)
+        {
+            var str = (IL2CppString*)idObj;
+            str->length = value.Length;
+
+            var chars = &str->chars;
+
+            for (var i = 0; i < value.Length; i++)
+                *chars[i] = value[0];
+
+            *chars[value.Length] = (char)0;
         }
     }
 }
