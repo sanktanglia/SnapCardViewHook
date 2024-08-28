@@ -40,6 +40,7 @@
             this.borderBox = new System.Windows.Forms.ComboBox();
             this.overrideCardCheckBox = new System.Windows.Forms.CheckBox();
             this.cardBox = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // surfaceEffectBox
@@ -122,7 +123,7 @@
             this.force3DCheckbox.Checked = true;
             this.force3DCheckbox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.force3DCheckbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.force3DCheckbox.Location = new System.Drawing.Point(34, 413);
+            this.force3DCheckbox.Location = new System.Drawing.Point(34, 419);
             this.force3DCheckbox.Name = "force3DCheckbox";
             this.force3DCheckbox.Size = new System.Drawing.Size(111, 20);
             this.force3DCheckbox.TabIndex = 7;
@@ -133,7 +134,7 @@
             // 
             this.overrideBorderCheckBox.AutoSize = true;
             this.overrideBorderCheckBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.overrideBorderCheckBox.Location = new System.Drawing.Point(34, 336);
+            this.overrideBorderCheckBox.Location = new System.Drawing.Point(34, 342);
             this.overrideBorderCheckBox.Name = "overrideBorderCheckBox";
             this.overrideBorderCheckBox.Size = new System.Drawing.Size(121, 20);
             this.overrideBorderCheckBox.TabIndex = 9;
@@ -144,7 +145,7 @@
             // 
             this.borderBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.borderBox.FormattingEnabled = true;
-            this.borderBox.Location = new System.Drawing.Point(34, 362);
+            this.borderBox.Location = new System.Drawing.Point(34, 368);
             this.borderBox.Name = "borderBox";
             this.borderBox.Size = new System.Drawing.Size(216, 21);
             this.borderBox.TabIndex = 8;
@@ -169,11 +170,22 @@
             this.cardBox.Size = new System.Drawing.Size(216, 21);
             this.cardBox.TabIndex = 10;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.ForeColor = System.Drawing.Color.Red;
+            this.label1.Location = new System.Drawing.Point(16, 308);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(261, 13);
+            this.label1.TabIndex = 12;
+            this.label1.Text = "!! setting an invalid variant value will crash the game !!";
+            // 
             // CardViewSelectorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(295, 449);
+            this.ClientSize = new System.Drawing.Size(302, 449);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.overrideCardCheckBox);
             this.Controls.Add(this.cardBox);
             this.Controls.Add(this.overrideBorderCheckBox);
@@ -212,5 +224,6 @@
         private System.Windows.Forms.ComboBox borderBox;
         private System.Windows.Forms.CheckBox overrideCardCheckBox;
         private System.Windows.Forms.ComboBox cardBox;
+        private System.Windows.Forms.Label label1;
     }
 }
