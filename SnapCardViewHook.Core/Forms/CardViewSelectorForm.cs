@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using IL2CppApi.Wrappers;
 using OpenCvSharp;
@@ -26,6 +27,7 @@ namespace SnapCardViewHook.Core.Forms
         private static string RevealEffectToUse = "";
         private static string BorderToUse = "";
         private static string CardToUse = "";
+        private IntPtr _clonedVariantObj = IntPtr.Zero;
 
         public CardViewSelectorForm()
         {
@@ -41,10 +43,10 @@ namespace SnapCardViewHook.Core.Forms
             _surfaceEffectList = SnapTypeDataCollector.SurfaceEffectDef_Id_Fields.ToDictionary(f => f.Name);
             _revealEffectList = SnapTypeDataCollector.CardRevealEffectDef_Id_Fields.ToDictionary(f => f.Name);
             _borderList = new Dictionary<string, IntPtr>();
-            _cardDefList = SnapTypeDataCollector.CardDefId_Fields.Skip(2).ToDictionary(f => f.Name);
+            _cardDefList = SnapTypeDataCollector.CardDef_Id_Fields.ToDictionary(f => f.Name);
 
             // try to load border data
-            GetBorderData(SnapTypeDataCollector.BorderDefList_CollectibleDefs_FieldInfo);
+            GetBorderData();
 
             // populate controls
             surfaceEffectBox.Items.AddRange(_surfaceEffectList.Keys.ToArray());
@@ -57,32 +59,32 @@ namespace SnapCardViewHook.Core.Forms
             SnapTypeDataCollector.CardViewInitializeHookOverride = CardViewInitOverride;
         }
 
-        private unsafe void GetBorderData(IL2CppFieldInfoWrapper fieldInfo)
+        private unsafe void GetBorderData()
         {
-            var borders = (IL2CppArray*) IL2CppHelper.GetStaticFieldValue(fieldInfo.Ptr);
+            var borders = (IL2CppList*)SnapTypeDataCollector.BorderDefList_Defs_cached_value;
 
             if (borders == null)
                 return;
 
-            if (borders->vector == null || borders->Count <= 0 || borders->Count > 64)
+            if (borders->Size == 0)
                 return;
 
-            var array = &borders->vector;
+            var array = &borders->Array->vector;
 
-            for (var i = 0; i < borders->Count; i++)
+            for (var i = 0; i < borders->Size; i++)
             {
                 var item = array[i];
 
-                if(item == null) 
+                if (item == null) 
                     break;
 
-                var borderDef = new BorderDefWrapper(item);
-                _borderList.Add(borderDef.Name, new IntPtr(borderDef.BorderDefId));
+                var strCast = (IL2CppString*)item;
+                _borderList.Add(new string(strCast->chars), new IntPtr(item));
             }
         }
 
         public void CardViewInitOverride(
-            IntPtr thisPr, IntPtr cardDef, int cost, int power, int rarity,
+            IntPtr thisPtr, IntPtr cardDef, int cost, int power, int rarity,
             IntPtr borderDefId, IntPtr artVariantDefId, IntPtr surfaceEffectDefId,
             IntPtr cardRevealEffectDefId, int cardRevealEffectType, bool showRevealEffectOnStart,
             int logoEffectId, int cardBackDefId, bool isMorph)
@@ -96,7 +98,7 @@ namespace SnapCardViewHook.Core.Forms
             if (force3DCheckbox.Checked)
                 rarity = 7;
 
-            SnapTypeDataCollector.CardViewInitializeOriginal(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
+            SnapTypeDataCollector.CardViewInitializeOriginal(thisPtr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
                 surfaceEffectDefId, cardRevealEffectDefId, cardRevealEffectType, showRevealEffectOnStart, logoEffectId,
                 cardBackDefId, isMorph);
         }
@@ -114,8 +116,15 @@ namespace SnapCardViewHook.Core.Forms
                 cardDefID = CardToUse;
             }
 
-            var cardDefIdEnumValue = _cardDefList[cardDefID].GetDefaultValue();
-            var overrideCardDefObjPtr = SnapTypeDataCollector.CardDefList_Find((int)(uint)cardDefIdEnumValue);
+
+            var cardDefIdEnumValue =
+                IL2CppHelper.GetStaticFieldValue(_cardDefList[cardDefID].Ptr);  
+            var overrideCardDefObjPtr = SnapTypeDataCollector.CardDefList_Find(cardDefIdEnumValue);
+            
+            if(overrideCardDefObjPtr == IntPtr.Zero )
+                return original;
+            
+
             var objWrapper = new CardDefWrapper(overrideCardDefObjPtr);
 
             cost = objWrapper.Cost;
@@ -139,6 +148,39 @@ namespace SnapCardViewHook.Core.Forms
             }
 
             var overridePtr = IL2CppHelper.GetStaticFieldValue(_variantList[variant].Ptr);
+            if (!overrideVariantCheckBox.Checked || (variantBox.SelectedItem == null && variantBox.Text.Length == 0))
+                return original;
+
+            IntPtr variantToOverride;
+            /*
+
+            if (variantBox.SelectedItem == null)
+            {
+                if (!_variantList.TryGetValue(variantBox.Text, out var variantFieldInfo))
+                {
+                    // create new obj instance
+                    if (_clonedVariantObj == IntPtr.Zero)
+                    {
+                        var modelObj = IL2CppHelper.GetStaticFieldValue(_variantList.Last().Value.Ptr);
+                        _clonedVariantObj = CloneIL2CppObject(modelObj, 1024);
+                    }
+
+                    variantToOverride = _clonedVariantObj;
+                    SetIdValue(variantToOverride, variantBox.Text);
+                }
+                else
+                {
+                    variantToOverride = IL2CppHelper.GetStaticFieldValue(variantFieldInfo.Ptr);
+                }
+            }
+            else
+            {
+                variantToOverride = IL2CppHelper.GetStaticFieldValue(_variantList[variantBox.SelectedItem.ToString()].Ptr);
+            }
+            */
+
+            //overridePtr = variantToOverride;
+
 
             if (!ensureVariantMatchCheckbox.Checked)
                 return overridePtr;
@@ -318,6 +360,38 @@ namespace SnapCardViewHook.Core.Forms
             {
                 System.IO.File.WriteAllText(@"C:\snap\export\Renders\error.txt", ex.ToString());
             }
+        }
+
+        private IntPtr CloneIL2CppObject(IntPtr obj, int size)
+        {
+            if(obj == IntPtr.Zero)
+                return IntPtr.Zero;
+
+            var cloned = Marshal.AllocHGlobal(size);
+
+            unsafe
+            {
+                var source = (byte*)obj;
+                var target = (byte*)cloned;
+
+                for(var i = 0; i < size; i++)
+                    target[i] = source[i];
+            }
+
+            return cloned;
+        }
+
+        private unsafe void SetIdValue(IntPtr idObj, string value)
+        {
+            var str = (IL2CppString*)idObj;
+            str->length = value.Length;
+
+            var chars = &str->chars;
+
+            for (var i = 0; i < value.Length; i++)
+                *chars[i] = value[i];
+
+            *chars[value.Length] = (char)0;
         }
 
     }
