@@ -33,10 +33,10 @@ namespace SnapCardViewHook.Core.Forms
             _surfaceEffectList = SnapTypeDataCollector.SurfaceEffectDef_Id_Fields.ToDictionary(f => f.Name);
             _revealEffectList = SnapTypeDataCollector.CardRevealEffectDef_Id_Fields.ToDictionary(f => f.Name);
             _borderList = new Dictionary<string, IntPtr>();
-            _cardDefList = SnapTypeDataCollector.CardDefId_Fields.Skip(2).ToDictionary(f => f.Name);
+            _cardDefList = SnapTypeDataCollector.CardDef_Id_Fields.ToDictionary(f => f.Name);
 
             // try to load border data
-            GetBorderData(SnapTypeDataCollector.BorderDefList_CollectibleDefs_FieldInfo);
+            GetBorderData();
 
             // populate controls
             surfaceEffectBox.Items.AddRange(_surfaceEffectList.Keys.ToArray());
@@ -49,32 +49,32 @@ namespace SnapCardViewHook.Core.Forms
             SnapTypeDataCollector.CardViewInitializeHookOverride = CardViewInitOverride;
         }
 
-        private unsafe void GetBorderData(IL2CppFieldInfoWrapper fieldInfo)
+        private unsafe void GetBorderData()
         {
-            var borders = (IL2CppArray*) IL2CppHelper.GetStaticFieldValue(fieldInfo.Ptr);
+            var borders = (IL2CppList*)SnapTypeDataCollector.BorderDefList_Defs_cached_value;
 
             if (borders == null)
                 return;
 
-            if (borders->vector == null || borders->Count <= 0 || borders->Count > 64)
+            if (borders->Size == 0)
                 return;
 
-            var array = &borders->vector;
+            var array = &borders->Array->vector;
 
-            for (var i = 0; i < borders->Count; i++)
+            for (var i = 0; i < borders->Size; i++)
             {
                 var item = array[i];
 
-                if(item == null) 
+                if (item == null) 
                     break;
 
-                var borderDef = new BorderDefWrapper(item);
-                _borderList.Add(borderDef.Name, borderDef.BorderDefId);
+                var strCast = (IL2CppString*)item;
+                _borderList.Add(new string(strCast->chars), new IntPtr(item));
             }
         }
 
         public void CardViewInitOverride(
-            IntPtr thisPr, IntPtr cardDef, int cost, int power, int rarity,
+            IntPtr thisPtr, IntPtr cardDef, int cost, int power, int rarity,
             IntPtr borderDefId, IntPtr artVariantDefId, IntPtr surfaceEffectDefId,
             IntPtr cardRevealEffectDefId, int cardRevealEffectType, bool showRevealEffectOnStart,
             int logoEffectId, int cardBackDefId, bool isMorph)
@@ -88,7 +88,7 @@ namespace SnapCardViewHook.Core.Forms
             if (force3DCheckbox.Checked)
                 rarity = 7;
 
-            SnapTypeDataCollector.CardViewInitializeOriginal(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
+            SnapTypeDataCollector.CardViewInitializeOriginal(thisPtr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
                 surfaceEffectDefId, cardRevealEffectDefId, cardRevealEffectType, showRevealEffectOnStart, logoEffectId,
                 cardBackDefId, isMorph);
         }
@@ -98,8 +98,9 @@ namespace SnapCardViewHook.Core.Forms
             if (!overrideCardCheckBox.Checked || cardBox.SelectedItem == null)
                 return original;
 
-            var cardDefIdEnumValue = _cardDefList[cardBox.SelectedItem.ToString()].GetDefaultValue();
-            var overrideCardDefObjPtr = SnapTypeDataCollector.CardDefList_Find((uint)cardDefIdEnumValue);
+            var cardDefIdEnumValue =
+                IL2CppHelper.GetStaticFieldValue(_cardDefList[cardBox.SelectedItem.ToString()].Ptr);  
+            var overrideCardDefObjPtr = SnapTypeDataCollector.CardDefList_Find(cardDefIdEnumValue);
             
             if(overrideCardDefObjPtr == IntPtr.Zero )
                 return original;
@@ -219,7 +220,7 @@ namespace SnapCardViewHook.Core.Forms
             var chars = &str->chars;
 
             for (var i = 0; i < value.Length; i++)
-                *chars[i] = value[0];
+                *chars[i] = value[i];
 
             *chars[value.Length] = (char)0;
         }

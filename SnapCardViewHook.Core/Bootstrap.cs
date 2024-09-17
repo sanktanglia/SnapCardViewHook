@@ -34,17 +34,20 @@ namespace SnapCardViewHook.Core
             }
         }
 
+        private static Thread _formThread;
+
         private static void CreateForm()
         {
-            var t = new Thread(() =>
+            if (_formThread != null && _formThread.IsAlive)
+                return;
+
+            var t = _formThread = new Thread(() =>
             {
                 var f = new CardViewSelectorForm();
                 Application.Run(f);
-            })
-            {
-                IsBackground = true,
-            };
+            });
 
+            t.IsBackground = true;
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
         }

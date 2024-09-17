@@ -16,6 +16,6 @@ namespace SnapCardViewHook.Core.IL2Cpp
         [FieldOffset(0x18)]
         internal int Count;
         [FieldOffset(0x20)]
-        internal void** vector;
+        internal void* vector;
     }
 }

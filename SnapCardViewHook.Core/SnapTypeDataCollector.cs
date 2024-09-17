@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Windows.Forms;
 using IL2CppApi.Wrappers;
 using SnapCardViewHook.Core.IL2Cpp;
 // ReSharper disable InconsistentNaming
@@ -11,12 +13,13 @@ namespace SnapCardViewHook.Core
 {
     public static unsafe class SnapTypeDataCollector
     {
-        public delegate IntPtr CardDefList_Find_delegate_(uint cardDef);
+        public delegate IntPtr CardDefList_Find_delegate_(IntPtr cardDef);
         public delegate IntPtr CardToArtVariantDefList_Find_delegate_(IntPtr artVariantDefId);
+        public delegate IntPtr void__delegate_();
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         public delegate void CardView_Initialize_delegate_(
-            IntPtr thisPr, IntPtr cardDef, int cost, int power, int rarity,
+            IntPtr thisPtr, IntPtr cardDef, int cost, int power, int rarity,
             IntPtr borderDefId, IntPtr artVariantDefId, IntPtr surfaceEffectDefId,
             IntPtr cardRevealEffectDefId, int cardRevealEffectType, bool showRevealEffectOnStart,
             int logoEffectId, int cardBackDefId, bool isMorph);
@@ -28,9 +31,11 @@ namespace SnapCardViewHook.Core
             //
             public const string Dll_App_View = "App.View.dll";
             public const string Namespace_CubeUnity_App_View = "CubeUnity.App.View";
+            //
+            public const string Namespace_CubeDef_DefData = "CubeDef.DefData";
         }
 
-        public static IL2CppFieldInfoWrapper[] CardDefId_Fields { get; private set; }
+        public static IL2CppFieldInfoWrapper[] CardDef_Id_Fields { get; private set; }
         public static IntPtr CardDefList_Find_methodPtr { get; private set; }
         public static IL2CppFieldInfoWrapper[] ArtVariantDef_Id_Fields { get; private set; }
         public static IL2CppFieldInfoWrapper[] SurfaceEffectDef_Id_Fields { get; private set; }
@@ -45,8 +50,10 @@ namespace SnapCardViewHook.Core
         public static int CardToArtVariantDef_CardDefId_Field_Offset { get; private set; }
         public static int BorderDef_BorderDefId_Field_Offset { get; private set; }
         public static int BorderDef_Name_Field_Offset { get; private set; }
-        public static IL2CppFieldInfoWrapper BorderDefList_CollectibleDefs_FieldInfo { get; private set; }
-        public static IL2CppFieldInfoWrapper BorderDefList_RarityDefs_FieldInfo { get; private set; }
+
+        public static void__delegate_ BorderDefList_get_Defs { get; private set; }
+        public static IntPtr BorderDefList_Defs_cached_value { get; private set; }
+
 
 
         public static CardView_Initialize_delegate_ CardViewInitializeHookOverride { get; set; }
@@ -90,9 +97,6 @@ namespace SnapCardViewHook.Core
                     .GetClasses()
                     .FirstOrDefault(c => c.Namespace == typeNameSpace && c.Name == typeName);
 
-            if (@class == null)
-                return null;
-
             return @class;
         }
 
@@ -122,11 +126,9 @@ namespace SnapCardViewHook.Core
 
         private static void Collect_CardDefId(IL2CppImageWrapper[] assemblies)
         {
-            var cardDefIdClass = TryGetIL2CppClass(assemblies, Constants.Dll_SecondDinner_CubeDef, Constants.Namespace_CubeDef, "CardDefId");
-
-            // enum type
-            // enum definitions are stored as fields inside the class
-            CardDefId_Fields = cardDefIdClass.GetFields();
+            CardDef_Id_Fields =
+                GetIdClassFields(assemblies, Constants.Dll_SecondDinner_CubeDef, Constants.Namespace_CubeDef,
+                    "CardDef");
         }
 
         private static void Collect_CardDefList(IL2CppImageWrapper[] assemblies)
@@ -273,11 +275,12 @@ namespace SnapCardViewHook.Core
         private static void Collect_BorderDefList(IL2CppImageWrapper[] assemblies)
         {
             const string className = "BorderDefList";
+            var borderDefListClass = TryGetIL2CppClass(assemblies, Constants.Dll_SecondDinner_CubeDef, Constants.Namespace_CubeDef_DefData, className);
 
-            var borderDefListClass = TryGetIL2CppClass(assemblies, Constants.Dll_SecondDinner_CubeDef, Constants.Namespace_CubeDef, className);
+            var method = borderDefListClass.GetMethods().FirstOrDefault(m => m.Name == "get_DefIds");
 
-            BorderDefList_RarityDefs_FieldInfo = TryGetField(borderDefListClass, "<RarityDefs>k__BackingField");
-            BorderDefList_CollectibleDefs_FieldInfo = TryGetField(borderDefListClass, "<CollectibleDefs>k__BackingField");
+            BorderDefList_get_Defs = Marshal.GetDelegateForFunctionPointer<void__delegate_>(method.MethodPointer);
+            BorderDefList_Defs_cached_value = BorderDefList_get_Defs();
         }
 
         private static void Collect_BorderDef(IL2CppImageWrapper[] assemblies)
@@ -293,23 +296,16 @@ namespace SnapCardViewHook.Core
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void CardView_Initialize_Detour(
-            IntPtr thisPr, IntPtr cardDef, int cost, int power, int rarity,
+            IntPtr thisPtr, IntPtr cardDef, int cost, int power, int rarity,
             IntPtr borderDefId, IntPtr artVariantDefId, IntPtr surfaceEffectDefId,
             IntPtr cardRevealEffectDefId, int cardRevealEffectType, bool showRevealEffectOnStart,
             int logoEffectId, int cardBackDefId, bool isMorph)
         {
+            var @delegate = CardViewInitializeHookOverride ?? CardViewInitializeOriginal;
 
-            if (CardViewInitializeHookOverride != null)
-            {
-                CardViewInitializeHookOverride(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
-                    surfaceEffectDefId, cardRevealEffectDefId, cardRevealEffectType, showRevealEffectOnStart,
-                    logoEffectId,
-                    cardBackDefId, isMorph);
-                return;
-            }
-
-            CardViewInitializeOriginal(thisPr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
-                surfaceEffectDefId, cardRevealEffectDefId, cardRevealEffectType, showRevealEffectOnStart, logoEffectId,
+            @delegate(thisPtr, cardDef, cost, power, rarity, borderDefId, artVariantDefId,
+                surfaceEffectDefId, cardRevealEffectDefId, cardRevealEffectType, showRevealEffectOnStart,
+                logoEffectId,
                 cardBackDefId, isMorph);
         }
     }
